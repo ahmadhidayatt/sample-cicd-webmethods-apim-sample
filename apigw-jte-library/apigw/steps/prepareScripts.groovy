@@ -2,6 +2,7 @@ void call() {
   sh 'pwd'
   sh 'ls -la'
   sh 'ls -R'
+  sh 'find . -name common.lib'
 
  
 
