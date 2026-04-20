@@ -1,0 +1,46 @@
+{
+  "id" : "ba29290e-432e-48c6-8a9b-8c15ca67a49f",
+  "names" : [ {
+    "value" : "Default Policy for API msCustomer",
+    "locale" : "English"
+  } ],
+  "descriptions" : [ {
+    "value" : "",
+    "locale" : "English"
+  } ],
+  "scope" : {
+    "scopeConditions" : [ ]
+  },
+  "policyEnforcements" : [ {
+    "enforcements" : [ {
+      "enforcementObjectId" : "f9141164-1ecc-4e08-b799-eb05d1fd2122",
+      "order" : "0"
+    }, {
+      "enforcementObjectId" : "ec1d36ff-fe76-4bf7-be09-57b5b93a5aad",
+      "order" : "1"
+    } ],
+    "stageKey" : "routing"
+  }, {
+    "enforcements" : [ {
+      "enforcementObjectId" : "79febfd4-41a4-4653-8c9b-cea0315ef868",
+      "order" : "0"
+    } ],
+    "stageKey" : "IAM"
+  }, {
+    "enforcements" : [ {
+      "enforcementObjectId" : "860671fa-4b45-4728-a550-c3734588083c",
+      "order" : "0"
+    } ],
+    "stageKey" : "responseFaultProcessing"
+  }, {
+    "enforcements" : [ {
+      "enforcementObjectId" : "8b326c39-0d89-4be3-b8ac-5c27fbc4b407",
+      "order" : "0"
+    } ],
+    "stageKey" : "transport"
+  } ],
+  "policyScope" : "SERVICE",
+  "global" : false,
+  "active" : false,
+  "systemPolicy" : false
+}

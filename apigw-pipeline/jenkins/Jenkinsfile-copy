@@ -1,0 +1,159 @@
+pipeline {
+  agent any
+
+  options {
+    timestamps()
+    timeout(time: 60, unit: 'MINUTES')
+    disableConcurrentBuilds()
+    buildDiscarder(logRotator(numToKeepStr: '30'))
+  }
+
+  environment {
+    COMMON_LIB   = "apigw-pipeline/bin/common.lib"
+    TEST_RESULTS = "apigw-pipeline/test-results"
+  }
+
+  stages {
+
+    /* ========================================= */
+    stage('Checkout') {
+      steps { checkout scm }
+    }
+
+    /* ========================================= */
+    stage('Load Properties') {
+      steps {
+        script {
+          def props = readProperties file: 'apigw-pipeline/jenkins/jenkins.properties'
+
+          env.API_PROJECT         = props['api_project']
+          env.APIGATEWAY_USERNAME = props['apigateway_username']
+          env.APIGATEWAY_PASSWORD = props['apigateway_password']
+
+          // CSV: url1,url2,url3,url4
+          env.GATEWAYS = props['apigateway_urls']
+
+          if (!env.GATEWAYS?.trim()) {
+            error("apigateway_urls kosong di jenkins.properties")
+          }
+        }
+      }
+    }
+
+    /* ========================================= */
+    stage('Deploy Sequential') {
+      steps {
+        script {
+
+          def gateways = env.GATEWAYS.split(',')
+          def summary = []
+
+          for (int i = 0; i < gateways.size(); i++) {
+
+            def gw = gateways[i].trim()
+            def backupFile = ""
+            def gwName = "GW-${i+1}"
+
+            stage("${gwName} (${gw})") {
+
+              try {
+
+                /* ================= PRECHECK ================= */
+                stage("Precheck") {
+                  sh """
+                    source ${COMMON_LIB}
+                    validate_gateway_up "${gw}"
+                  """
+                }
+
+                /* ================= BACKUP ================= */
+                stage("Backup") {
+                  backupFile = sh(
+                    script: """
+                      source ${COMMON_LIB}
+                      backup_api "${API_PROJECT}" "${gw}" "${APIGATEWAY_USERNAME}" "${APIGATEWAY_PASSWORD}"
+                    """,
+                    returnStdout: true
+                  ).trim()
+
+                  echo "Backup file: ${backupFile}"
+                }
+
+                /* ================= IMPORT ================= */
+                stage("Import") {
+                  sh """
+                    source ${COMMON_LIB}
+                    import_api "${API_PROJECT}" "${gw}" "${APIGATEWAY_USERNAME}" "${APIGATEWAY_PASSWORD}"
+                  """
+                }
+
+                /* ================= POSTCHECK ================= */
+                stage("Postcheck") {
+                  sh """
+                    source ${COMMON_LIB}
+                    validate_api_exists "${API_PROJECT}" "${gw}" "${APIGATEWAY_USERNAME}" "${APIGATEWAY_PASSWORD}"
+                  """
+                }
+
+                /* ================= TEST ================= */
+                stage("Test") {
+                  sh """
+                    rm -rf ${TEST_RESULTS}
+                    mkdir -p ${TEST_RESULTS}
+
+                    docker run --rm \
+                      -v \$PWD/apigw-pipeline:/etc/newman \
+                      -w /etc/newman \
+                      postman/newman:latest \
+                      run tests/collection.json \
+                      -e tests/environment.json \
+                      --env-var httpInvokeUrl=${gw} \
+                      --reporters cli,junit \
+                      --reporter-junit-export test-results/result.xml
+                  """
+                }
+
+                summary << "${gwName} SUCCESS"
+
+              } catch (err) {
+
+                echo "FAILED on ${gw}"
+
+                if (backupFile?.trim()) {
+                  stage("Rollback") {
+                    sh """
+                      source ${COMMON_LIB}
+                      rollback_api "${backupFile}" "${gw}" "${APIGATEWAY_USERNAME}" "${APIGATEWAY_PASSWORD}"
+                    """
+                  }
+                } else {
+                  echo "Skip rollback — backup tidak tersedia"
+                }
+
+                summary << "${gwName} FAILED"
+                error("STOP DEPLOY karena gagal di ${gwName}")
+              }
+            }
+          }
+
+          /* ================= SUMMARY ================= */
+          stage("Summary") {
+            echo "============================"
+            echo "DEPLOYMENT SUMMARY"
+            summary.each { echo it }
+            echo "============================"
+          }
+        }
+      }
+    }
+  }
+
+  post {
+    success {
+      echo "DEPLOY SUCCESS"
+    }
+    failure {
+      echo "DEPLOY FAILED"
+    }
+  }
+}
