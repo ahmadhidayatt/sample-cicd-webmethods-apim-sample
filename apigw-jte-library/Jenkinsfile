@@ -1,4 +1,4 @@
-@Library('apigw') _
+
 node {
     loadProperties()
     deploy()
