@@ -3,6 +3,8 @@ void call() {
   sh 'ls -la'
   sh 'ls -R'
   echo libraryResource('resources/bin/common.lib')
+  echo libraryResource('bin/common.lib')
+  echo libraryResource('common.lib')
 
   def commonLib = libraryResource('resources/bin/common.lib')
   if (!commonLib) {
@@ -12,5 +14,4 @@ void call() {
 
   writeFile file: 'common.lib',
     text: libraryResource('resources/bin/common.lib')
-
 }
