@@ -1,5 +1,6 @@
 node {
-  loadProperties()
-  deploy()
-  summary()
+    checkout scm
+    loadProperties()
+    deploy()
+    summary()
 }
