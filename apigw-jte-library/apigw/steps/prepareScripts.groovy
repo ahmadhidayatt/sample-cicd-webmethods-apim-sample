@@ -1,10 +1,10 @@
 void call() {
-
   String  commonLib = resource('gateway_lib.sh')
 
   echo 'Preparing shell scripts from JTE library...'
 
   writeFile file: 'common.lib', text: commonLib
+  writeFile file: 'common.sh', text: commonLib
 
   sh 'pwd'
   sh 'ls -R'
