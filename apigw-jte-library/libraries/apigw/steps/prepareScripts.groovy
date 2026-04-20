@@ -1,5 +1,6 @@
 void call() {
-
+  sh 'ls -R'
+ 
   echo "Preparing shell scripts from JTE library..."
 
   writeFile file: 'common.lib',
