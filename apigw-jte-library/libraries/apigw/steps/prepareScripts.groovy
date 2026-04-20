@@ -2,6 +2,7 @@ void call() {
   sh 'pwd'
   sh 'ls -la'
   sh 'ls -R'
+  echo libraryResource('bin/common.lib')
 
   echo 'Preparing shell scripts from JTE library...'
 
