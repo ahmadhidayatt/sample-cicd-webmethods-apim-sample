@@ -1,18 +1,11 @@
 void call() {
   sh 'pwd'
-  sh 'ls -la'
   sh 'ls -R'
-  sh 'find . -name common.lib'
-
- 
-
-
+  echo 'DEBUG LIBRARY RESOURCE'
+  sh 'ls -R $JENKINS_HOME/workspace/@libs || true'
   def commonLib = libraryResource('common.lib')
-  if (!commonLib) {
-    error 'common.lib not found in Shared Library resources/bin/'
-  }
+
   echo 'Preparing shell scripts from JTE library...'
 
-  writeFile file: 'common.lib',
-    text: libraryResource('common.lib')
+  writeFile file: 'common.lib', text: commonLib
 }
