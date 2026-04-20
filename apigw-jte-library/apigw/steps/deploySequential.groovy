@@ -1,8 +1,12 @@
 void call() {
   prepareScripts()
-
-  def gateways = env.APIGATEWAY_URLS.split(',')
-  def esList   = env.APIGATEWAY_ES_URLS.split(',')
+  def gateways = config.apigw.gatewayUrls.split(',')
+  def esList   = config.apigw.esUrls.split(',')
+  def user     = config.apigw.username
+  def pass     = config.apigw.password
+  def apiName  = config.apigw.apiProject
+  
+  def apiProject = config.apigw.apiProject
   def results  = [:]
 
   for (int i = 0; i < gateways.size(); i++) {
