@@ -1,6 +1,4 @@
 void call() {
-  sh 'pwd'
-  sh 'ls -R'
 
   String  commonLib = resource('gateway_lib.sh')
 
@@ -8,6 +6,9 @@ void call() {
 
   writeFile file: 'common.lib', text: commonLib
 
-    echo 'DEBUG LIBRARY RESOURCE'
+  sh 'pwd'
+  sh 'ls -R'
+
+  echo 'DEBUG LIBRARY RESOURCE'
   sh 'ls -R $JENKINS_HOME/workspace/@libs || true'
 }
