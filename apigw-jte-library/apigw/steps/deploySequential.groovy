@@ -14,7 +14,7 @@ void call() {
 
     stage("GW-${i+1} (${gw})") {
       try {
-        precheck(gw)
+        precheck(gw, user, pass)
         def backupFile = backup(gw)
         importApi(gw)
         postcheck(gw)

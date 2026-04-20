@@ -1,4 +1,4 @@
-void call(String gw) {
+void call(String gw, String user, String pass) {
 
   sh """
     chmod +x common.sh
