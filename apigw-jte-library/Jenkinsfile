@@ -1,3 +1,5 @@
-loadProperties()
-deploy()
-summary()
+node {
+  loadProperties()
+  deploy()
+  summary()
+}
