@@ -1,12 +1,11 @@
 void call() {
   prepareScripts()
-  def gateways = config.libraries.apigw.gatewayUrls
-  def esList   = config.libraries.apigw.esUrls
-  def user     = config.libraries.apigw.apigw.username
-  def pass     = config.libraries.apigw.apigw.password
-  def apiName  = config.libraries.apigw.apiProject
-  
-  def apiProject = config.libraries.apigw.apiProject
+  def cfg = config.libraries.apigw
+  def gateways   = cfg.gatewayUrls
+  def esList     = cfg.esUrls
+  def user       = cfg.username
+  def pass       = cfg.password
+  def apiProject = cfg.apiProject
 
   def results  = [:]
 
