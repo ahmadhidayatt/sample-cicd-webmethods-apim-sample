@@ -1,6 +1,5 @@
 @Validate
 void call() {
-  prepareScripts()
   def cfg = config.libraries.apigw
   def gateways   = cfg.gatewayUrls
   def esList     = cfg.esUrls
@@ -9,7 +8,7 @@ void call() {
   def apiProject = cfg.apiProject
 
   def results  = [:]
-
+  prepareScripts()
   for (int i = 0; i < gateways.size(); i++) {
     def gw = gateways[i].trim()
     def esUrl = esList[i].trim()
