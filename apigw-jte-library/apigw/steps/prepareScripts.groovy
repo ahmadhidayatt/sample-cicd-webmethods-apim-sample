@@ -2,7 +2,7 @@ void call() {
   sh 'pwd'
   sh 'ls -la'
   sh 'ls -R'
-  echo libraryResource('resources/bin/common.lib')
+
   echo libraryResource('bin/common.lib')
   echo libraryResource('common.lib')
 
