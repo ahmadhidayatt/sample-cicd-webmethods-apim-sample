@@ -1,6 +1,6 @@
 void call() {
 
-  def props = readProperties file: 'jenkins/jenkins.properties'
+  def props = readProperties file: 'apigw-pipeline/jenkins/jenkins.properties'
 
   env.API_PROJECT        = props['api_project']
   env.APIGATEWAY_URLS    = props['apigateway_urls']
