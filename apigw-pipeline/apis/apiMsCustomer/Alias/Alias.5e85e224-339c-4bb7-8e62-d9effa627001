@@ -1,7 +1,0 @@
-{
-  "id" : "5e85e224-339c-4bb7-8e62-d9effa627001",
-  "name" : "msCustomer-url",
-  "type" : "simple",
-  "owner" : "Administrator",
-  "value" : "http://10.22.15.34:5555/msCustomer/${sys:resource_path}"
-}

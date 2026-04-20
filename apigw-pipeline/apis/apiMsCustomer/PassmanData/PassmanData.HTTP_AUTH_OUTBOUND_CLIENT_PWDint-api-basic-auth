@@ -1,7 +1,0 @@
-{
-  "id" : "HTTP_AUTH_OUTBOUND_CLIENT_PWDint-api-basic-auth",
-  "pw" : "qQfITUjFlovpJGiJpq9suw==",
-  "encryptorId" : "EntrustAes",
-  "saltString" : "KR/ugG3I2exyf+tXf5DS5A==",
-  "iterationCount" : 1
-}
