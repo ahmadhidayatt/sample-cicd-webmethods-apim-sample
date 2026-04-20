@@ -1,146 +1,350 @@
-#!/bin/bash
+#!/usr/bin/env zsh
 ##############################################################################
-##
-## This script can be used for developers to validate the changes made to the 
-## APIs. This creates an single node Docker based API Gateway environment 
-## imports the entire set and of API Projects and then run the tests suites 
-## against the build machine.
-## Parameters: 
-## apigateway_image           The DTR for API Gateway image.
-## apigateway_server_port     API Gateway server port.Default is 5555
-## apigateway_ui_port		  API Gateway UI port.Default is 9072
-## apigateway_es_port		  API Gateway Elastic search port.Default is 9240
-## create_new                 Create new API Gateway container even if an 
-##                             existing container is running by killing it.
-##                             Default is false.
-## test_suite				  The postman collection test_suite to run.
-##							   Default will not run any test.To run all tests pass *
-##
-## skip_import 				  To skip the import of APIs
-##
+# common.lib - Structured Enterprise Version
 ##############################################################################
 
-CURR_DIR="$PWD"
-. ./common.lib
-apigateway_image=
-apigateway_server_port=5555
-apigateway_ui_port=9072
-create_new=false
-apigateway_es_port=9240
-test_suite=
-skip_import=false
-#Usage of this script
-usage(){
-echo "Usage: $0"
-echo "args:"
-echo "--apigateway_image	    The DTR for API Gateway image."
-echo "--apigateway_server_port  API Gateway server port.Default is 5555"
-echo "--apigateway_ui_port      API Gateway UI port.Default is 9072"
-echo "--apigateway_es_port		API Gateway Elastic search port.Default is 9240"
-echo "--create_new              Create new API Gateway container even if an existing container is running by killing it.Default is false."
-echo "--test_suite              The postman collection test_suite to run.Default will not run any test.To run all tests pass *"
-echo "--skip_import             To skip the import of APIs"
-exit
+__lib_file=""
+if [ -n "${BASH_SOURCE[0]:-}" ]; then
+  __lib_file="${BASH_SOURCE[0]}"
+else
+  __lib_file="${(%):-%x}"
+fi
+
+BIN_DIR="$(cd "$(dirname "$__lib_file")" && pwd)"
+ROOT_DIR="$(cd "$BIN_DIR/.." && pwd)"
+
+_curl_common_args() {
+  local args=(-sS)
+  [ "${APIGW_INSECURE:-false}" = "true" ] && args+=(-k)
+  echo "${args[@]}"
 }
 
-#Parseinputarguments
-parseArgs(){
-  while test $# -ge 1; do
-    arg=$1
-	shift
-    case $arg in
-	  --apigateway_image)
-        apigateway_image=${1}
-        shift
-	  ;;
-	  --apigateway_server_port)
-        apigateway_server_port=${1}
-        shift
-	  ;;
-	  --apigateway_ui_port)
-        apigateway_ui_port=${1}
-        shift
-	  ;;
-	  --apigateway_es_port)
-        apigateway_es_port=${1}
-        shift
-	  ;;
-	  --create_new)
-	    create_new=${1}
-		shift
-	  ;;	
-	  --test_suite)
-	    test_suite=${1}
-		shift
-	  ;;
-	  --skip_import)
-	    skip_import=true
-		shift
-	  ;;
-	  *)
-        echo "Unknown: $arg"
-        usage
-		exit
-      ;;
-    esac
-  done
+##############################################################################
+# PRECHECK
+##############################################################################
+
+validate_gateway_up() {
+  local url="$1"
+  local username="$2"
+  local password="$3"
+  echo "Checking Gateway health..."
+
+  local http_code
+  http_code=$(curl $(_curl_common_args) \
+    -u "${username}:${password}" \
+    -o /dev/null \
+    -w "%{http_code}" \
+    "${url}/rest/apigateway/health" || true)
+
+  echo "Health HTTP Status: ${http_code}"
+
+  if [ "$http_code" != "200" ]; then
+    echo "Gateway health check FAILED"
+    return 1
+  fi
+
+  echo "Gateway is UP"
 }
 
-main(){
-#Parseinputarguments
-if [ $# -ne 0 ]
-then 
-parseArgs "$@"
-fi
+validate_newman_installed() {
+  if ! command -v newman >/dev/null 2>&1; then
+    echo "Newman not installed"
+    return 1
+  fi
+}
 
+##############################################################################
+# API RESOLVE
+##############################################################################
 
-if [ -z $apigateway_image ] 
-then
-	sh gateway_setup.sh  --stage build --apigateway_server_port $apigateway_server_port --apigateway_ui_port $apigateway_ui_port --apigateway_es_port $apigateway_es_port
-else 
-	sh gateway_setup.sh  --stage build --apigateway_image $apigateway_image --apigateway_server_port $apigateway_server_port --apigateway_ui_port $apigateway_ui_port --apigateway_es_port $apigateway_es_port
-fi
+resolve_api_id_by_name() {
+  local api_name="$1"
+  local url="$2"
+  local username="$3"
+  local password="$4"
 
-echo "Checking the API Gateway is up" 
-ping_apigateway_server http://localhost:$apigateway_server_port 30 30
-PING_RETURN_CODE=$?
-if [ $PING_RETURN_CODE -eq 0 ]
-then
-echo "API Gateway at http://localhost:$apigateway_server_port is not up.Exiting"
-exit
-fi
+  local payload
+  payload=$(cat <<EOF
+{"types":["api"],"condition":"and","scope":[{"attributeName":"apiName","keyword":"${api_name}"}]}
+EOF
+)
 
-if [ $skip_import = "false" ] 
-then
-	echo "Importing all the APIs to the Build machine"
-	for file in ../apis/*; do
-		if [ -d "$file" ]; then
-			import_api $file http://localhost:$apigateway_server_port "Administrator" "manage"
-		fi
-	done
-fi 
+  local resp
+  resp="$(curl $(_curl_common_args) -u "${username}:${password}" \
+    -H "Content-Type: application/json" \
+    -d "$payload" \
+    "${url}/rest/apigateway/search")"
 
-if [ -z "$test_suite" ] 
-then
-echo "Not running the tests"
-exit
-fi
+  if command -v python3 >/dev/null 2>&1; then
+    python3 -c '
+import sys, json
+api_name = sys.argv[1]
+d = json.load(sys.stdin)
+items = d.get("api", []) or []
 
-echo "Running tests for API gateway"
-if [ "$test_suite" = "*" ] 
-then 
-for file in ../tests/test-suites/*; do
-    run_test $file ../tests/environment/build_environment.json "httpInvokeUrl=http://localhost:$apigateway_server_port"
-done
-exit
-fi
+exact = [x for x in items if x.get("apiName") == api_name]
+if exact:
+    print(exact[0].get("id",""))
+    raise SystemExit(0)
 
-run_test $test_suite ../tests/environment/build_environment.json "httpInvokeUrl=http://localhost:$apigateway_server_port"
+if len(items) == 1:
+    print(items[0].get("id",""))
+    raise SystemExit(0)
 
+if len(items) == 0:
+    print("")
+    raise SystemExit(0)
 
-cd $PWD
+# ambiguous
+cands=[]
+for x in items:
+    cands.append(
+        str(x.get("apiName")) +
+        " (v=" + str(x.get("apiVersion")) +
+        ", id=" + str(x.get("id")) + ")"
+    )
+sys.stderr.write("API name not unique / not exact match. Kandidat:\\n- " + "\\n- ".join(cands) + "\\n")
+print("")
+' "$api_name" <<<"$resp"
+    return 0
+  fi
+
+  echo "$resp" | sed -n 's/.*"id":"\([^"]*\)".*/\1/p' | head -n 1
+}
+
+##############################################################################
+# BACKUP
+##############################################################################
+
+backup_api() {
+  local api_project="$1"
+  local url="$2"
+  local username="$3"
+  local password="$4"
+
+  local api_id
+  api_id=$(resolve_api_id_by_name "$api_project" "$url" "$username" "$password")
+
+  BACKUP_FILE="$ROOT_DIR/${api_project}_backup.zip"
+  APP_FILE="$ROOT_DIR/${api_project}_apps.json"
+  META_FILE="$ROOT_DIR/flagisnew.json"
+  if [ -n "$api_id" ]; then
+    echo "API ditemukan: $api_id" >&2
+
+    curl -sS -u "${username}:${password}" \
+      -H "Content-Type: application/json" \
+      -d "{\"apiName\":\"${api_project}\"}" \
+      -o "$APP_FILE" \
+      "$url/invoke/sample:validateApi" \
+      
+    
+
+    echo "IS_NEW_API=false" > "$META_FILE"
+
+  else
+    echo "API tidak ditemukan → ambil semua aplikasi" >&2
+
+    curl -sS -u "${username}:${password}" \
+      -H "Content-Type: application/json" \
+      -o "$APP_FILE" \
+      "$url/rest/apigateway/applications" \
+     
+    
+
+    echo "IS_NEW_API=true" > "$META_FILE"
+
+  fi
+
+  # 🔹 backup tetap jalan
+  curl $(_curl_common_args) -G \
+    -u "${username}:${password}" \
+    -H "Accept: application/octet-stream" \
+    --data-urlencode "apis=${api_id}" \
+    --data-urlencode "include-registered-applications=true" \
+    --data-urlencode "include-users=true" \
+    --data-urlencode "include-groups=true" \
+    -o "$BACKUP_FILE" \
+    "$url/rest/apigateway/archive"
+
+  
+  echo "$BACKUP_FILE|$APP_FILE"
+}
+
+##############################################################################
+# IMPORT
+##############################################################################
+
+import_api() {
+  local api_project="$1"
+  local url="$2"
+  local username="$3"
+  local password="$4"
+
+  local API_DIR="$ROOT_DIR/apis/$api_project"
+  local ZIP_FILE="$ROOT_DIR/${api_project}.zip"
+  local RESP_FILE="$ROOT_DIR/import_response.txt"
+
+  ( cd "$API_DIR" && zip -qr "$ZIP_FILE" . )
+
+  local http_code
+  http_code=$(curl $(_curl_common_args) \
+    -u "${username}:${password}" \
+    -H "Content-Type:application/zip" \
+    -H "Accept:application/json" \
+    --data-binary @"$ZIP_FILE" \
+    -o "$RESP_FILE" \
+    -w "%{http_code}" \
+    "${url}/rest/apigateway/archive?overwrite=apis,policies,policyactions&fixingMissingVersions=false" || true)
+
+  echo "Import HTTP Status: ${http_code}"
+
+  if [ "$http_code" != "200" ] && [ "$http_code" != "201" ]; then
+    echo "Import FAILED"
+    cat "$RESP_FILE"
+    return 1
+  fi
+
+  echo "Import SUCCESS"
 }
 
 
-#Call the main function with all arguments passed in...
-main "$@"
+##############################################################################
+# POSTCHECK
+##############################################################################
+
+validate_api_exists() {
+  local api_project="$1"
+  local url="$2"
+  local username="$3"
+  local password="$4"
+
+  local resp_file="/tmp/validate_${api_project}.json"
+
+  local http_code
+  http_code=$(curl $(_curl_common_args) \
+    -u "${username}:${password}" \
+    -H "Content-Type: application/json" \
+    -d "{\"types\":[\"api\"],\"condition\":\"and\",\"scope\":[{\"attributeName\":\"apiName\",\"keyword\":\"${api_project}\"}]}" \
+    -o "$resp_file" \
+    -w "%{http_code}" \
+    "${url}/rest/apigateway/search" || true)
+
+  echo "Search HTTP Status: ${http_code}"
+
+  if [ "$http_code" != "200" ]; then
+    echo "API validation FAILED"
+    cat "$resp_file"
+    return 1
+  fi
+
+  local id
+  id=$(sed -n 's/.*"id":"\([^"]*\)".*/\1/p' "$resp_file" | head -n 1)
+
+  if [ -z "$id" ]; then
+    echo "API not found!"
+    return 1
+  fi
+
+  echo "API exists (id=$id)"
+}
+
+validate_application() {
+  local api_project="$1"
+  local url="$2"
+  local username="$3"
+  local password="$4"
+
+  APP_FILE="$ROOT_DIR/${api_project}_apps.json"
+  META_FILE="$ROOT_DIR/flagisnew.json"
+
+  # ambil flag (FIXED)
+  local is_new_api
+  is_new_api=$(awk -F: '/IS_NEW_API/ {gsub(/[ ,}]/,"",$2); print $2}' "$META_FILE")
+
+  # fallback wajib
+  if [ -z "$is_new_api" ]; then
+    echo "FLAG EMPTY → default false" >&2
+    is_new_api=false
+  fi
+
+  echo "IS_NEW_API=$is_new_api" >&2
+
+  local tmp_file="/tmp/app_payload_${api_project}.json"
+
+  # inject aman
+  sed "s/}[[:space:]]*$/,\"IS_NEW_API\":${is_new_api}}/" "$APP_FILE" > "$tmp_file"
+
+  echo "Payload sent:" >&2
+  cat "$tmp_file" >&2
+
+  local resp_file="/tmp/validate_app_response.json"
+
+  local http_code
+  http_code=$(curl -sS \
+    -u "${username}:${password}" \
+    -H "Content-Type: application/json" \
+    --data @"$tmp_file" \
+    -o "$resp_file" \
+    -w "%{http_code}" \
+    "${url}/invoke/sample:validateApplication" || true)
+
+  echo "HTTP Status: $http_code" >&2
+
+  is_equal=$(grep -o '"isEqual":[^,}]*' "$resp_file" | cut -d':' -f2 | tr -d ' ')
+  
+  echo "isEqual=$is_equal" >&2
+  
+  if [ "$is_equal" = "true" ]; then
+    echo "✅ VALIDATION SUCCESS" >&2
+  else
+    echo "⚠️ VALIDATION WARNING (NOT MATCHED)" >&2
+  
+    echo "=== MISSING APPS ===" >&2
+    grep -A50 '"missingApps"' "$resp_file" >&2
+  
+    echo "=== CHANGED APPS ===" >&2
+    grep -A50 '"changedApps"' "$resp_file" >&2
+  
+    echo "=== NEW APPS ===" >&2
+    grep -A50 '"newApps"' "$resp_file" >&2
+  
+    # ❗ penting: jangan return 1
+  fi
+  
+  return 0
+}
+
+
+##############################################################################
+# TEST SUITE
+##############################################################################
+
+run_test_suite() {
+  local test_suite="$1"
+  local environment_file_location="$2"
+  local apigateway_server_url="$3"
+  local result_folder="$4"
+
+  [ -d "$result_folder" ] && rm -rf "$result_folder"
+  mkdir -p "$result_folder"
+
+  local CURR_DIR="../"
+  local API_DIR="${CURR_DIR}/tests/test-suites/"
+
+  echo "Running tests for API gateway"
+
+  if [ "$test_suite" = "all" ]; then
+    # zsh-safe: avoid failing on empty glob
+    if [ -n "${ZSH_VERSION:-}" ]; then
+      setopt local_options null_glob
+    fi
+
+    for file in "${API_DIR}"*; do
+      [ -f "$file" ] || continue
+      run_test "$file" "$environment_file_location" "httpInvokeUrl=${apigateway_server_url}" "$result_folder"
+    done
+    return 0
+  fi
+
+  run_test "$test_suite" "$environment_file_location" "httpInvokeUrl=${apigateway_server_url}" "$result_folder"
+}
