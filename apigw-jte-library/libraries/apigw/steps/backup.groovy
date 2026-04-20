@@ -1,5 +1,4 @@
 void call(String gw) {
-
   def result = sh(
     script: """
       source common.lib
@@ -8,10 +7,10 @@ void call(String gw) {
     returnStdout: true
   ).trim()
 
-  def parts = result.split("\\|")
+  def parts = result.split('\\|')
 
   env.BACKUP_FILE = parts[0]
-  env.APP_FILE    = parts.size() > 1 ? parts[1] : ""
+  env.APP_FILE    = parts.size() > 1 ? parts[1] : ''
 
   echo "Backup file: ${env.BACKUP_FILE}"
   echo "App file: ${env.APP_FILE}"

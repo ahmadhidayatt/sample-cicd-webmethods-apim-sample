@@ -1,7 +1,9 @@
 void call() {
+  sh 'pwd'
+  sh 'ls -la'
   sh 'ls -R'
- 
-  echo "Preparing shell scripts from JTE library..."
+
+  echo 'Preparing shell scripts from JTE library...'
 
   writeFile file: 'common.lib',
     text: libraryResource('resources/bin/common.lib')
@@ -12,7 +14,7 @@ void call() {
   writeFile file: 'gateway_setup.sh',
     text: libraryResource('resources/bin/gateway_setup.sh')
 
-  sh """
+  sh '''
     chmod +x *.sh
-  """
+  '''
 }
