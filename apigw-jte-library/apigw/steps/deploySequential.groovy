@@ -1,5 +1,5 @@
 @Validate
-void call() {
+void call(context) {
   def cfg = config.libraries.apigw
   def gateways   = cfg.gatewayUrls
   def esList     = cfg.esUrls
