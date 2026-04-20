@@ -1,4 +1,5 @@
-void call() {
+@Validate
+void call(context) {
   prepareScripts()
   def cfg = config.libraries.apigw
   def gateways   = cfg.gatewayUrls
