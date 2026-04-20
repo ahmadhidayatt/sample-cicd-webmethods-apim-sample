@@ -3,7 +3,7 @@ void call() {
   sh 'ls -la'
   sh 'ls -R'
 
-  echo libraryResource('bin/common.lib')
+ 
   echo libraryResource('common.lib')
 
   def commonLib = libraryResource('bin/common.lib')
