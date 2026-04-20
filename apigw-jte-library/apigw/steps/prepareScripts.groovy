@@ -4,7 +4,7 @@ void call() {
   sh 'ls -R'
 
  
-  echo libraryResource('common.lib')
+
 
   def commonLib = libraryResource('bin/common.lib')
   if (!commonLib) {
