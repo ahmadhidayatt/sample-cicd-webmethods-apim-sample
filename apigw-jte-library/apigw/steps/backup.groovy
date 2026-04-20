@@ -1,8 +1,8 @@
 void call(String gw) {
   def result = sh(
     script: """
-      source common.lib
-      backup_api "${env.API_PROJECT}" "${gw}" "${env.APIGW_CREDS_USR}" "${env.APIGW_CREDS_PSW}"
+    chmod +x common.sh
+    ./common.sh backup_api "${env.API_PROJECT}" "${gw}" "${env.APIGW_CREDS_USR}" "${env.APIGW_CREDS_PSW}"
     """,
     returnStdout: true
   ).trim()
