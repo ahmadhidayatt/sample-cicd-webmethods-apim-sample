@@ -3,7 +3,7 @@ void call() {
   sh 'ls -R'
   echo 'DEBUG LIBRARY RESOURCE'
   sh 'ls -R $JENKINS_HOME/workspace/@libs || true'
-  String  commonLib = resource('common.lib')
+  String  commonLib = resource('gateway_lib.sh')
 
   echo 'Preparing shell scripts from JTE library...'
 
