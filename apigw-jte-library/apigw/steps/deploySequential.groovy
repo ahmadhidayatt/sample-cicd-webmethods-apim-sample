@@ -1,14 +1,13 @@
-@Validate
-void call(context) {
-  def cfg = config.libraries.apigw
-  def gateways   = cfg.gatewayUrls
-  def esList     = cfg.esUrls
-  def user       = cfg.username
-  def pass       = cfg.password
-  def apiProject = cfg.apiProject
+void call() {
+  prepareScripts()
+  def gateways   = config.gatewayUrls
+  def esList     = config.esUrls
+  def user       = config.username
+  def pass       = config.password
+  def apiProject = config.apiProject
 
   def results  = [:]
-  prepareScripts()
+
   for (int i = 0; i < gateways.size(); i++) {
     def gw = gateways[i].trim()
     def esUrl = esList[i].trim()
