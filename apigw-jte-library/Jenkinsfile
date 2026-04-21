@@ -1,7 +1,18 @@
 
 node {
-  
-    //loadProperties()
+    checkout([
+        $class: 'GitSCM',
+        branches: [[name: "*/${config.repoBranch}"]],
+        userRemoteConfigs: [[
+            url: config.repoUrl,
+            credentialsId: config.repoCredId
+        ]],
+        extensions: [[
+            $class: 'RelativeTargetDirectory',
+            relativeTargetDir: 'apigw-pipeline'
+        ]]
+    ])
+    loadProperties()
     deploy()
     summary()
 }

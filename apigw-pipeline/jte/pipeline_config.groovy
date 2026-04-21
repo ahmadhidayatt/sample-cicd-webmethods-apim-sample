@@ -1,7 +1,9 @@
 libraries {
   apigw {
     apiProject = 'apiMsCustomer'
-
+    repoUrl     = 'https://github.com/ahmadhidayatt/asset-api-testcicd-v2.git'
+    repoCredId  = 'ahmadhidayatt'
+    repoBranch  = 'main'
     gatewayUrl = 'http://100.87.70.99:25155'
 
     gatewayUrls = [
