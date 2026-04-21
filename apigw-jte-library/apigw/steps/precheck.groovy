@@ -1,7 +1,14 @@
-void call(String gw, String user, String pass) {
+void call(String gw) {
 
-  sh """
-    chmod +x common.sh
-    ./common.sh validate_gateway_up "${gw}" "${user}" "${pass}"
-  """
+  withCredentials([usernamePassword(
+    credentialsId: 'apigwcredential',
+    usernameVariable: 'APIGW_USER',
+    passwordVariable: 'APIGW_PASS'
+  )]) {
+
+    sh """
+      chmod +x common.sh
+      ./common.sh validate_gateway_up "${gw}" "$APIGW_USER" "$APIGW_PASS"
+    """
+  }
 }

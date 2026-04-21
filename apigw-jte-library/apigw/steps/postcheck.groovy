@@ -1,8 +1,16 @@
-void call(String gw) {
+void call(String api, String gw) {
 
-  sh """
-    chmod +x common.sh
-    ./common.sh validate_api_exists "${env.API_PROJECT}" "${gw}" "${env.APIGW_CREDS_USR}" "${env.APIGW_CREDS_PSW}"
-    ./common.sh validate_application "${env.API_PROJECT}" "${gw}" "${env.APIGW_CREDS_USR}" "${env.APIGW_CREDS_PSW}"
-  """
+  withCredentials([usernamePassword(
+    credentialsId: 'apigwcredential',
+    usernameVariable: 'U',
+    passwordVariable: 'P'
+  )]) {
+
+    sh """
+      chmod +x common.sh
+
+      ./common.sh validate_api_exists "${api}" "${gw}" "$U" "$P"
+      ./common.sh validate_application "${api}" "${gw}" "$U" "$P"
+    """
+  }
 }

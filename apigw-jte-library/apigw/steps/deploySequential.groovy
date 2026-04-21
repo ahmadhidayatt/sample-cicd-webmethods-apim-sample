@@ -14,11 +14,11 @@ void call() {
 
     stage("GW-${i+1} (${gw})") {
       try {
-        precheck(gw, user, pass)
-        def backupFile = backup(gw)
-        importApi(gw)
-        postcheck(gw)
-        testApi(gw, esUrl)
+        precheck(gw)
+        def backupFile = backup(gw,apiProject)
+        importApi(ggw,apiProjectw)
+        postcheck(gw,apiProject)
+        testApi(gw, esUrl ,apiProjectw)
 
         results[gw] = 'SUCCESS'
       } catch (err) {
