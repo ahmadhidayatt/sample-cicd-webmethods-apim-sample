@@ -354,7 +354,7 @@ run_test_suite() {
   mkdir -p "$result_folder"
 
   local CURR_DIR="../"
-  local API_DIR="${CURR_DIR}/tests/test-suites/"
+  local API_DIR="${CURR_DIR}/apigw-pipeline/tests/test-suites/"
 
   echo "Running tests for API gateway"
 
