@@ -214,7 +214,7 @@ import_api() {
   local username="$3"
   local password="$4"
 
-  local API_DIR="$ROOT_DIR/apis/$api_project"
+  local API_DIR="$ROOT_DIR/apigw-pipeline/apis/$api_project"
   local ZIP_FILE="$ROOT_DIR/${api_project}.zip"
   local RESP_FILE="$ROOT_DIR/import_response.txt"
 
