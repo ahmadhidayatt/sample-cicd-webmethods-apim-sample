@@ -391,6 +391,8 @@ _usage() {
 }
 
 if [ "${BASH_SOURCE[0]}" = "$0" ]; then
+  ROOT_DIR="$(pwd)"   # ← tambah ini
+
   COMMAND="${1:-}"
   shift || true
 
