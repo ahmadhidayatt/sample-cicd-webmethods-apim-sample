@@ -1,5 +1,4 @@
-void call(String gw,String api) {
-
+void call(String gw, String api) {
   withCredentials([usernamePassword(
     credentialsId: 'apigwcredential',
     usernameVariable: 'APIGW_USER',
@@ -14,7 +13,9 @@ void call(String gw,String api) {
       returnStdout: true
     ).trim()
 
-    def parts = result.split('\\|')
+    // ambil hanya baris terakhir (hindari output lain ikut terbaca)
+    def lastLine = result.split('\n')[-1].trim()
+    def parts    = lastLine.split('\\|')
 
     env.BACKUP_FILE = parts[0]
     env.APP_FILE    = parts.size() > 1 ? parts[1] : ''
@@ -22,6 +23,6 @@ void call(String gw,String api) {
     echo "Backup file: ${env.BACKUP_FILE}"
     echo "App file: ${env.APP_FILE}"
 
-    return env.BACKUP_FILE
+    return env.BACKUP_FILE   
   }
 }

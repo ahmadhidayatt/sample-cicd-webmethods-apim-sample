@@ -2,31 +2,30 @@ void call() {
   prepareScripts()
   def gateways   = config.gatewayUrls
   def esList     = config.esUrls
-  def user       = config.username
-  def pass       = config.password
   def apiProject = config.apiProject
 
-  def results  = [:]
+  def results = [:]
 
   for (int i = 0; i < gateways.size(); i++) {
-    def gw = gateways[i].trim()
+    def gw    = gateways[i].trim()
     def esUrl = esList[i].trim()
 
     stage("GW-${i+1} (${gw})") {
+      def backupFile = ''
+
       try {
         precheck(gw)
-        def backupFile = backup(gw,apiProject)
-        importApi(ggw,apiProjectw)
-        postcheck(gw,apiProject)
-        testApi(gw, esUrl ,apiProjectw)
+        backupFile = backup(gw, apiProject)   
+        importApi(apiProject, gw)             
+        postcheck(apiProject, gw)             
+        testApi(gw, esUrl)
 
         results[gw] = 'SUCCESS'
       } catch (err) {
-        echo "FAILED on ${gw}"
+        echo "FAILED on ${gw}: ${err.message}"
         results[gw] = 'FAILED'
 
-        rollback(gw)
-
+        rollback(backupFile, gw)             
         error("STOP DEPLOY — failure on ${gw}")
       }
     }
