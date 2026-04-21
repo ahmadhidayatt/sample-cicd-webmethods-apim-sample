@@ -14,14 +14,14 @@ void call(String gw, String esUrl) {
         -v \$PWD:/etc/newman \
         -w /etc/newman \
         postman/newman:latest \
-        run tests/collection.json \
-        -e tests/environment.json \
+        run apigw-pipeline/tests/collection.json \
+        -e apigw-pipeline/tests/environment.json \
         --env-var username=$U \
         --env-var password=$P \
         --env-var httpInvokeUrl=${gw} \
         --env-var esUrl=${esUrl} \
         --reporters cli,junit \
-        --reporter-junit-export test-results/result.xml
+        --reporter-junit-export apigw-pipeline/test-results/result.xml
     """
   }
 }
