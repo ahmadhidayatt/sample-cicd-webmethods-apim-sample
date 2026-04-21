@@ -7,8 +7,6 @@ void call() {
   writeFile file: 'common.sh', text: commonLib
 
   sh 'pwd'
-  sh 'ls -R'
-
   echo 'DEBUG LIBRARY RESOURCE'
   sh 'ls -R $JENKINS_HOME/workspace/@libs || true'
 }
