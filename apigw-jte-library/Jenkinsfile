@@ -2,14 +2,10 @@
 node {
     checkout([
         $class: 'GitSCM',
-        branches: [[name: "*/${pipelineConfig.repoBranch}"]],
+        branches: [[name: '*/main']],
         userRemoteConfigs: [[
-            url: pipelineConfig.repoUrl,
-            credentialsId: pipelineConfig.repoCredId
-        ]],
-        extensions: [[
-            $class: 'RelativeTargetDirectory',
-            relativeTargetDir: 'apigw-pipeline'
+            url: 'https://github.com/ahmadhidayatt/asset-api-testcicd-v2',
+            credentialsId: 'ahmadhidayatt'
         ]]
     ])
     loadProperties()
