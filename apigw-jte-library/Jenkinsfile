@@ -2,10 +2,10 @@
 node {
     checkout([
         $class: 'GitSCM',
-        branches: [[name: '*/main']],
+        branches: [[name: "*/${config.repoBranch}"]],
         userRemoteConfigs: [[
-            url: 'https://github.com/ahmadhidayatt/asset-api-testcicd-v2',
-            credentialsId: 'ahmadhidayatt'
+            url: config.repoUrl,
+            credentialsId: config.repoCredId
         ]]
     ])
     loadProperties()
