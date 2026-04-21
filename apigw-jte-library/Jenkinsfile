@@ -2,10 +2,10 @@
 node {
     checkout([
         $class: 'GitSCM',
-        branches: [[name: "*/${config.repoBranch}"]],
+        branches: [[name: "*/${pipelineConfig.repoBranch}"]],
         userRemoteConfigs: [[
-            url: config.repoUrl,
-            credentialsId: config.repoCredId
+            url: pipelineConfig.repoUrl,
+            credentialsId: pipelineConfig.repoCredId
         ]],
         extensions: [[
             $class: 'RelativeTargetDirectory',
