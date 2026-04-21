@@ -20,8 +20,6 @@ libraries {
     'http://100.119.82.110:9240'
   ]
 
-    username = 'Administrator'
-    password = 'manage'
     credentialsId = 'apigw-creds'
   }
 }
