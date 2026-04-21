@@ -31,5 +31,5 @@ void call() {
     }
   }
 
-  state.results = results
+  env.DEPLOY_RESULTS = results.collect { k, v -> "${k}=${v}" }.join(',')
 }
