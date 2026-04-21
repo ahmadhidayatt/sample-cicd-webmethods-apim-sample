@@ -1,0 +1,13 @@
+{
+  "id" : "8b326c39-0d89-4be3-b8ac-5c27fbc4b407",
+  "names" : [ {
+    "value" : "Enable HTTP / HTTPS",
+    "locale" : "en"
+  } ],
+  "templateKey" : "entryProtocolPolicy",
+  "parameters" : [ {
+    "templateKey" : "protocol",
+    "values" : [ "https" ]
+  } ],
+  "active" : false
+}

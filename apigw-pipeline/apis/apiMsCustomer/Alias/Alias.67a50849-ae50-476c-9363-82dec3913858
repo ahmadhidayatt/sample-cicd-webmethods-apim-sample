@@ -1,0 +1,13 @@
+{
+  "id" : "67a50849-ae50-476c-9363-82dec3913858",
+  "name" : "int-api-basic-auth",
+  "description" : "Basic Auth for SVR-INT-API",
+  "type" : "httpTransportSecurityAlias",
+  "owner" : "Administrator",
+  "authType" : "HTTP_BASIC",
+  "authMode" : "NEW",
+  "httpAuthCredentials" : {
+    "userName" : "int-muf-user",
+    "password" : "KioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKio="
+  }
+}

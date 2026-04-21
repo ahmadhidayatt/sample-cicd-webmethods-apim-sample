@@ -1,0 +1,16 @@
+{
+  "id" : "f9141164-1ecc-4e08-b799-eb05d1fd2122",
+  "names" : [ {
+    "value" : "Straight Through Routing",
+    "locale" : "en"
+  } ],
+  "templateKey" : "straightThroughRouting",
+  "parameters" : [ {
+    "templateKey" : "endpointUri",
+    "values" : [ "${msCustomer-url}" ]
+  }, {
+    "templateKey" : "method",
+    "values" : [ "CUSTOM" ]
+  } ],
+  "active" : false
+}
