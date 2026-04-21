@@ -95,7 +95,6 @@ if len(items) == 0:
     print("")
     raise SystemExit(0)
 
-# ambiguous
 cands=[]
 for x in items:
     cands.append(
@@ -141,7 +140,7 @@ backup_api() {
     echo "IS_NEW_API=false" > "$META_FILE"
 
   else
-    echo "API tidak ditemukan → ambil semua aplikasi" >&2
+    echo "API tidak ditemukan -> ambil semua aplikasi" >&2
 
     curl -sS -u "${username}:${password}" \
       -H "Content-Type: application/json" \
@@ -152,7 +151,6 @@ backup_api() {
 
   fi
 
-  # backup tetap jalan
   curl $(_curl_common_args) -G \
     -u "${username}:${password}" \
     -H "Accept: application/octet-stream" \
@@ -164,6 +162,46 @@ backup_api() {
     "$url/rest/apigateway/archive"
 
   echo "$BACKUP_FILE|$APP_FILE"
+}
+
+##############################################################################
+# ROLLBACK
+##############################################################################
+
+rollback_api() {
+  local backup_file="$1"
+  local url="$2"
+  local username="$3"
+  local password="$4"
+
+  local RESP_FILE="/tmp/rollback_response.txt"
+
+  echo "Rolling back using: $backup_file"
+
+  if [ ! -f "$backup_file" ]; then
+    echo "Rollback FAILED: backup file not found: $backup_file"
+    return 1
+  fi
+
+  local http_code
+  http_code=$(curl $(_curl_common_args) \
+    -u "${username}:${password}" \
+    -H "Content-Type:application/zip" \
+    -H "Accept:application/json" \
+    --data-binary @"$backup_file" \
+    -o "$RESP_FILE" \
+    -w "%{http_code}" \
+    "${url}/rest/apigateway/archive?overwrite=apis,policies,policyactions&fixingMissingVersions=false" || true)
+
+  echo "Rollback HTTP Status: ${http_code}"
+
+  if [ "$http_code" != "200" ] && [ "$http_code" != "201" ]; then
+    echo "Rollback FAILED"
+    cat "$RESP_FILE"
+    return 1
+  fi
+
+  echo "Rollback SUCCESS"
 }
 
 ##############################################################################
@@ -256,7 +294,7 @@ validate_application() {
   is_new_api=$(awk -F: '/IS_NEW_API/ {gsub(/[ ,}]/,"",$2); print $2}' "$META_FILE")
 
   if [ -z "$is_new_api" ]; then
-    echo "FLAG EMPTY → default false" >&2
+    echo "FLAG EMPTY -> default false" >&2
     is_new_api=false
   fi
 
@@ -288,16 +326,13 @@ validate_application() {
   echo "isEqual=$is_equal" >&2
 
   if [ "$is_equal" = "true" ]; then
-    echo "✅ VALIDATION SUCCESS" >&2
+    echo "VALIDATION SUCCESS" >&2
   else
-    echo "⚠️ VALIDATION WARNING (NOT MATCHED)" >&2
-
+    echo "VALIDATION WARNING (NOT MATCHED)" >&2
     echo "=== MISSING APPS ===" >&2
     grep -A50 '"missingApps"' "$resp_file" >&2
-
     echo "=== CHANGED APPS ===" >&2
     grep -A50 '"changedApps"' "$resp_file" >&2
-
     echo "=== NEW APPS ===" >&2
     grep -A50 '"newApps"' "$resp_file" >&2
   fi
@@ -337,22 +372,37 @@ run_test_suite() {
 
   run_test "$test_suite" "$environment_file_location" "httpInvokeUrl=${apigateway_server_url}" "$result_folder"
 }
+
 ##############################################################################
-# CLI ENTRYPOINT (NO SOURCE NEEDED)
+# DISPATCHER — allows: ./common.sh <function_name> [args...]
 ##############################################################################
 
-case "${1:-}" in
-  validate_gateway_up) shift; validate_gateway_up "$@" ;;
-  resolve_api_id_by_name) shift; resolve_api_id_by_name "$@" ;;
-  backup_api) shift; backup_api "$@" ;;
-  import_api) shift; import_api "$@" ;;
-  validate_api_exists) shift; validate_api_exists "$@" ;;
-  *)
-    echo "Usage:"
-    echo "  $0 validate_gateway_up <url> <user> <pass>"
-    echo "  $0 backup_api <api> <url> <user> <pass>"
-    echo "  $0 import_api <api> <url> <user> <pass>"
-    echo "  $0 validate_api_exists <api> <url> <user> <pass>"
-    exit 1
-    ;;
-esac
+_usage() {
+  echo "Usage:"
+  echo "  ./common.sh validate_gateway_up <url> <user> <pass>"
+  echo "  ./common.sh validate_newman_installed"
+  echo "  ./common.sh backup_api <api> <url> <user> <pass>"
+  echo "  ./common.sh rollback_api <backup_file> <url> <user> <pass>"
+  echo "  ./common.sh import_api <api> <url> <user> <pass>"
+  echo "  ./common.sh validate_api_exists <api> <url> <user> <pass>"
+  echo "  ./common.sh validate_application <api> <url> <user> <pass>"
+  echo "  ./common.sh run_test_suite <suite> <env_file> <gw_url> <result_folder>"
+  exit 1
+}
+
+if [ "${BASH_SOURCE[0]}" = "$0" ]; then
+  COMMAND="${1:-}"
+  shift || true
+
+  case "$COMMAND" in
+    validate_gateway_up)       validate_gateway_up "$@" ;;
+    validate_newman_installed) validate_newman_installed "$@" ;;
+    backup_api)                backup_api "$@" ;;
+    rollback_api)              rollback_api "$@" ;;
+    import_api)                import_api "$@" ;;
+    validate_api_exists)       validate_api_exists "$@" ;;
+    validate_application)      validate_application "$@" ;;
+    run_test_suite)            run_test_suite "$@" ;;
+    *)                         _usage ;;
+  esac
+fi
