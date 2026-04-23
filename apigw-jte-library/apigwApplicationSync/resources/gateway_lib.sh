@@ -348,7 +348,7 @@ validate_application() {
     --data @"$application" \
     -o "$resp_file" \
     -w "%{http_code}" \
-    "${url}/invoke/sample:validateSyncApplication")
+    "${url}/invoke/PegadaianPipeline.services:validateSyncApplication")
   
   status=$?
   if [ $status -ne 0 ]; then
