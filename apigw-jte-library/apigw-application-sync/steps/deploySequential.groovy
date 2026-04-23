@@ -4,6 +4,8 @@ void call() {
   def masterGateway = env.MASTER_APIGATEWAY_URL
   def esList     = config.esUrls
   def applicationName = env.APPLICATION_NAME
+  def choice = params['app']
+  echo "Selected: ${choice}"
 
   def results = [:]
 
