@@ -132,7 +132,7 @@ get_app() {
     -H "Accept:application/json" \
     -o "$resp_file" \
     -w "%{http_code}" \
-    "${url}/applications/${application_id}")
+    "${url}/rest/gateway/applications/${application_id}")
 
   local status=$?
   if [ $status -ne 0 ]; then
