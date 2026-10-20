@@ -252,33 +252,37 @@ validate_api_exists() {
   local password="$4"
 
   local resp_file="/tmp/validate_${api_project}.json"
+  local id=""
+  local attempt=1
+  local max_attempts=5
 
-  local http_code
-  http_code=$(curl $(_curl_common_args) \
-    -u "${username}:${password}" \
-    -H "Content-Type: application/json" \
-    -d "{\"types\":[\"api\"],\"condition\":\"and\",\"scope\":[{\"attributeName\":\"apiName\",\"keyword\":\"${api_project}\"}]}" \
-    -o "$resp_file" \
-    -w "%{http_code}" \
-    "${url}/rest/apigateway/search" || true)
+  while [ $attempt -le $max_attempts ]; do
+    local http_code
+    http_code=$(curl $(_curl_common_args) \
+      -u "${username}:${password}" \
+      -H "Content-Type: application/json" \
+      -d "{\"types\":[\"api\"],\"condition\":\"and\",\"scope\":[{\"attributeName\":\"apiName\",\"keyword\":\"${api_project}\"}]}" \
+      -o "$resp_file" \
+      -w "%{http_code}" \
+      "${url}/rest/apigateway/search" || true)
 
-  echo "Search HTTP Status: ${http_code}"
+    echo "Search HTTP Status: ${http_code} (attempt $attempt/$max_attempts)"
 
-  if [ "$http_code" != "200" ]; then
-    echo "API validation FAILED"
-    cat "$resp_file"
-    return 1
-  fi
+    if [ "$http_code" = "200" ]; then
+      id=$(sed -n 's/.*"id":"\([^"]*\)".*/\1/p' "$resp_file" | head -n 1)
+      if [ -n "$id" ]; then
+        echo "API exists (id=$id)"
+        return 0
+      fi
+    fi
+    echo "Waiting for search index sync, retrying in 2s..."
+    sleep 2
+    attempt=$((attempt + 1))
+  done
 
-  local id
-  id=$(sed -n 's/.*"id":"\([^"]*\)".*/\1/p' "$resp_file" | head -n 1)
-
-  if [ -z "$id" ]; then
-    echo "API not found!"
-    return 1
-  fi
-
-  echo "API exists (id=$id)"
+  echo "API not found!"
+  cat "$resp_file"
+  return 1
 }
 
 validate_application() {

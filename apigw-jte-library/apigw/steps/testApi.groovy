@@ -8,7 +8,7 @@ void call(String gw, String esUrl) {
 
     sh """
       rm -rf test-results
-      mkdir -p test-results
+      mkdir -p test-results apigw-pipeline/test-results
 
       docker run --rm \
         -v \$PWD:/etc/newman \
