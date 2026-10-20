@@ -2,7 +2,7 @@ libraries {
   apigw {
     apiProject = 'Training00'
     repoUrl     = 'https://github.com/ahmadhidayatt/sample-cicd-webmethods-apim-sample.git'
-    repoCredId  = 'github'
+    repoCredId  = ''
     repoBranch  = 'main'
     gatewayUrl = 'http://84.247.147.48:5555'
 
@@ -11,7 +11,7 @@ libraries {
     ]
 
     esUrls = [
-      'http://84.247.147.48:9240'
+      'http://84.247.151.27:9200'
     ]
 
     credentialsId = 'apigwcredential'
