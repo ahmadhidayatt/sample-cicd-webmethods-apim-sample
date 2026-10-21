@@ -11,7 +11,7 @@ libraries {
     ]
 
     esUrls = [
-      'http://84.247.151.27:9200'
+      'http://84.247.147.12:9200'
     ]
 
     credentialsId = 'apigwcredential'
